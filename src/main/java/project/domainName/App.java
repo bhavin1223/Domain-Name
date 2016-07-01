@@ -54,12 +54,7 @@ public class App
 		patternDomainName = Pattern.compile(DOMAIN_NAME_PATTERN);
 	}
 	  
-		
-	
-	
-	
-	
-	
+
     public static void main( String[] args ) throws UnsupportedEncodingException, IOException
     {
     	Scanner in = new Scanner(System.in);
