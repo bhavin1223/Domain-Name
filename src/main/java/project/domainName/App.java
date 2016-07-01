@@ -74,7 +74,7 @@ public class App
             trustCertificates();
             
             GoogleResults google = new GoogleResults();
-            String[] t = google.googleDomainName(companyName, 5); 
+            String[] t = google.googleDomainName(companyName, 50); 
             System.out.println("Top results from google:\n" );
             for(int i=0;i<5;i++)
             {
