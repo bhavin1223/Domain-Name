@@ -13,12 +13,8 @@ import org.jsoup.select.Elements;
 public class LinkedInResults {
 	public static void linkedInDomainName (String search) throws UnsupportedEncodingException, IOException
 	{
-//		String google = "http://www.google.com/search?q=";
-//		String charset = "UTF-8";
-//		String userAgent = "ExampleBot 1.0 (+http://example.com/bot)";
-//    	
-    	search = search + "LinkedIn";
-//    	Elements links = Jsoup.connect(google + URLEncoder.encode(search, charset)+ "&num=4").userAgent(userAgent).referrer("http://www.google.com").get().select(".g>.r>a");
+    	
+    	search = search + " LinkedIn";
     	Elements links = generateURLs(search,4);
     	for (Element link : links) 
     	{
@@ -41,10 +37,19 @@ public class LinkedInResults {
 	    		String title = doc.title();
 	    		System.out.println("title : " + title);
 
-	    		Elements listItems = doc.getElementsByAttribute("website");
-	    		for(Element item: listItems)
-	    		    System.out.println(item.text());
-	
+	    		//Elements listItems = doc.getElementsByTag("a");
+//	    		for(Element item: listItems)
+//	    		{
+//	    			String temp = item.text();
+//	    			if(temp.contains(".")&&!temp.contains(" "))
+//	    				System.out.println(item.text()+"--From LinkedIn");
+//	    		}
+	    		 Elements listItems = doc.getElementsByTag("#info-card-overview-content > div > dl > div.definition-list.container > dd:nth-child(10) > a");
+	    	        for (Element item : listItems) {
+	    	          String linkHref = item.attr("href");
+	    	          String linkText = item.text();
+	    	          System.out.println("Text::"+linkText+", URL::"+linkHref);
+	    	        }
 	    	} catch (Exception e) {
 	    		e.printStackTrace();
 	    	}

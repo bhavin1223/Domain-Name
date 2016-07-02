@@ -12,14 +12,17 @@ import org.jsoup.select.Elements;
 
 public class AngelListResults {
 	
-	public  String angelListDomainName (String search, int numberOfUrlr) throws UnsupportedEncodingException, IOException
+	//Returns the domain-name (if found) from AngelList website.
+	public  String angelListDomainName (String search, int numberOfUrls) throws UnsupportedEncodingException, IOException
 	{
 		
-    	search = search + "AngelList";
-    	Elements links = generateURLs(search,4);
+    	search = search + " AngelList";
+    	Elements links = generateURLs(search,numberOfUrls);	//Returns top 4 urls google search query.
 		String result = "";
-    	for (Element link : links) 
+		
+    	for (Element link : links) 					//Goes through the 4 urls.
     	{
+    		
     		String url = link.absUrl("href"); 
     	    url = URLDecoder.decode(url.substring(url.indexOf('=') + 1, url.indexOf('&')), "UTF-8");
 
@@ -36,12 +39,14 @@ public class AngelListResults {
 	    		doc = Jsoup.connect(url).userAgent(userAgent).get();
 	
 	    		// get page title
-	    		String title = doc.title();
-	    		System.out.println("title : " + title);
+	    		String title = doc.title();			//Page Title.
+	    		
 	    		Elements els = doc.getElementsByClass("company_url");
+	    		
+	    		//Domain name found.
 	    		result = els.text();
 	    		result = result.substring(0, result.length()/2);
-	    		//System.out.println("Domain name from AngelList :"+result);
+	    		
 		       
 	
 	    	} catch (Exception e) {
@@ -52,13 +57,14 @@ public class AngelListResults {
     	return result;
 	}
 	
-	public static Elements generateURLs(String search, int numberOfUrl) throws UnsupportedEncodingException, IOException
+	//Returns url based on search query.
+	public static Elements generateURLs(String search, int numberOfUrls) throws UnsupportedEncodingException, IOException
 	{
 		String google = "http://www.google.com/search?q=";
 		String charset = "UTF-8";
 		String userAgent = "ExampleBot 1.0 (+http://example.com/bot)";
 		
-		Elements links = Jsoup.connect(google + URLEncoder.encode(search, charset)+ "&num="+ numberOfUrl).userAgent(userAgent).referrer("http://www.google.com").get().select(".g>.r>a");
+		Elements links = Jsoup.connect(google + URLEncoder.encode(search, charset)+ "&num="+ numberOfUrls).userAgent(userAgent).referrer("http://www.google.com").get().select(".g>.r>a");
 		return links;
 	}
 }

@@ -13,22 +13,21 @@ import org.jsoup.select.Elements;
 
 public class WikipediaResults {
 	
+	//Returns the domain-name (if found) from Wikipedia website.
 	public String wikiDomainName (String search,int numberOfUrlr) throws UnsupportedEncodingException, IOException
 	{
-//		String google = "http://www.google.com/search?q=";
-//		String charset = "UTF-8";
-//    	String userAgent = "ExampleBot 1.0 (+http://example.com/bot)"; // Change this to your company's name and bot homepage!
-    	search = search + "wikipedia";
-    	//Elements links = Jsoup.connect(google + URLEncoder.encode(search, charset)+ "&num="+numberOfUrl).userAgent(userAgent).referrer("http://www.google.com").get().select(".g>.r>a");
-    	Elements links = generateURLs(search,4);
+    	search = search + " wikipedia";
+
+    	Elements links = generateURLs(search,numberOfUrlr);	//Returns top 4 urls google search query.
 		String result = "";
-    	for (Element link : links) 
+    	
+		for (Element link : links) 
     	{
     		String url = link.absUrl("href"); // Google returns URLs in format "http://www.google.com/url?q=<url>&sa=U&ei=<someKey>".
     	    url = URLDecoder.decode(url.substring(url.indexOf('=') + 1, url.indexOf('&')), "UTF-8");
 
     	    if (!url.startsWith("http")||!url.contains(".wikipedia.")) {
-    	    	System.out.println("~~" + url);
+    	    	//System.out.println("~~" + url);
     	    	continue; // Ads/news/etc.
     	    }
     	    
@@ -39,25 +38,26 @@ public class WikipediaResults {
 	    		doc = Jsoup.connect(url).get();
 	
 	    		// get page title
-	    		String title = doc.title();
-	    		System.out.println("title : " + title);
+	    		String title = doc.title();					//Page title
+	    		//System.out.println("title : " + title);
 	
 	    		
-	    		Element elements = doc.select("table.infobox").first();
-	    		Iterator<Element> iterator = elements.select("td").iterator();
-		        while(iterator.hasNext())
-		        {
-		        	String temp = iterator.next().text();
-		        	if(temp.contains(".")&&!temp.contains(" "))
-		            {
-		        		result = temp;
-		        //		System.out.println("text : "+ temp);
-		        		break;
-		            }
-		        }
-		       
-	
+	    		Element elements = doc.select("table.infobox").first();			//Selects infobox table
+	    		
+	    			Iterator<Element> iterator = elements.select("td").iterator();
+	    			while(iterator.hasNext())									//Finds website url
+			        {
+			        	String temp = iterator.next().text();
+			        	if(temp.contains(".")&&!temp.contains(" ")&&temp.length()>4&&!temp.contains("$")&&!temp.contains(","))
+			            {
+			        		//Domain name found.
+			        		result = temp;
+			        		break;
+			            }
+			        }
+	    		
 	    	} catch (Exception e) {
+	    		//Error in connection.
 	    		e.printStackTrace();
 	    	}
 	    	 break;
@@ -65,6 +65,7 @@ public class WikipediaResults {
     	return result;
 	}
 	
+	//Returns url based on search query.
 	public static Elements generateURLs(String search, int numberOfUrl) throws UnsupportedEncodingException, IOException
 	{
 		String google = "http://www.google.com/search?q=";

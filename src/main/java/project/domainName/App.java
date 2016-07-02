@@ -1,4 +1,6 @@
 package project.domainName;
+
+
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -40,56 +42,133 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-/**
- * Hello world!
- *
- */
+
 public class App 
 {	
-	private static Pattern patternDomainName;
-	private Matcher matcher;
-	private static final String DOMAIN_NAME_PATTERN 
-		= "([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,6}";
-	static {
-		patternDomainName = Pattern.compile(DOMAIN_NAME_PATTERN);
-	}
-	  
-
+	
     public static void main( String[] args ) throws UnsupportedEncodingException, IOException
     {
     	Scanner in = new Scanner(System.in);
         String companyName;
-        System.out.println("Enter a Company name :");
+        System.out.println("Enter the Company name :");
         companyName = in.nextLine();
         while(companyName!=""&&companyName.length()>1)
         {
-        	System.out.println("Searching domain name of \'"+companyName+"\'");
+        	System.out.println("Searching the domain name of \'"+companyName+"\'");
         	String search = companyName;
             
             trustCertificates();
             
             GoogleResults google = new GoogleResults();
-            String[] t = google.googleDomainName(companyName, 50); 
-            System.out.println("Top results from google:\n" );
-            for(int i=0;i<5;i++)
+            
+            //Gives best 20 matches from top 50 google search results.
+            String[] googleDomain = google.googleDomainName(companyName, 50); 
+            
+            System.out.println("Top results from google:" );
+            int url_cnt =0; 
+            for(int i=0;i<20;i++)
             {
-            	System.out.println("" +t[i]);
+            	if(googleDomain[i]!=null)
+            	{
+            		url_cnt++;
+            		googleDomain[i] = googleDomain[i].replace("www.", "");
+            	}
+            	if(i<5)
+            	System.out.println("" +googleDomain[i]);
             }
             
+            //Gives domain name from Wikipedia.
             WikipediaResults wiki = new WikipediaResults();
-            String t1 = wiki.wikiDomainName(search,3);
-            System.out.println("From Wikipedia : \n" +t1);
+            String wikiDomain = "";
+            wikiDomain = wiki.wikiDomainName(search,3);
+            wikiDomain = wikiDomain.replace("www.", "");
+            System.out.println("From Wikipedia : '" +wikiDomain+"'");
+            
+            //Gives domain name from AngelList.
             AngelListResults angelList = new AngelListResults();
-            String t2 = angelList.angelListDomainName(search, 4);
-            System.out.println("From Angel List: \n " +t2);
+            String angelListDomain = "";
+            angelListDomain = angelList.angelListDomainName(search, 4);
+            System.out.println("From AngelList: '" +angelListDomain+"'");
+            
+            //Gives domain name from AngelList.
+            CrunchBaseResults crunchBase = new CrunchBaseResults();
+            String crunchBaseDomain = "";
+            crunchBaseDomain = crunchBase.crunchBaseDomainName(search,4);
+            System.out.println("From CrunchBase: '" +crunchBaseDomain+"'");
+            
+            wikiDomain = wikiDomain.toLowerCase();
+            crunchBaseDomain = crunchBaseDomain.toLowerCase();
+            angelListDomain = angelListDomain.toLowerCase();
+            System.out.println("\n\nTop result(s) for the domain name(s):");
+            int flag = 0;
+            try
+            {
+            	if(crunchBaseDomain.equals(wikiDomain)&&wikiDomain.length()>4)
+            	{
+            		System.out.println(crunchBaseDomain);
+            		flag = 1;
+            	}
+            	else if(crunchBaseDomain.equals(angelListDomain)&&angelListDomain.length()>4)
+            	{
+            		System.out.println(crunchBaseDomain);
+            		flag = 1;
+            	}
+            	else if(angelListDomain.equals(wikiDomain)&&wikiDomain.length()>4)
+            	{
+            		System.out.println(wikiDomain);
+            		flag = 1;
+            	}
+            	else
+	            	for(int i=0;i<Math.min(url_cnt, 20);i++)
+	                {
+	                	if((wikiDomain.length()>1)&&(googleDomain[i].equals(wikiDomain)==true))
+	                	{
+	                		System.out.println("" + googleDomain[i]);
+	                		flag = 1;
+	                		break;
+	                	}
+	                	else if(angelListDomain.length()>1&&googleDomain[i].equals(angelListDomain)==true)
+	                	{
+	                		System.out.println("" + googleDomain[i]);
+	                		flag = 1;
+	                		break;
+	                	}
+	                	else if(crunchBaseDomain.length()>1&&googleDomain[i].equals(crunchBaseDomain)==true)
+	                	{
+	                		System.out.println("" + googleDomain[i]);
+	                		flag = 1;
+	                		break;
+	                	}
+	                }
+            }
+            catch(Exception e)
+            {
+            	//Null values in DomainName variables.
+            }
+            
+            
+            //If no match found the print all the domain names.
+            if(flag==0)
+            {
+            	
+            	for(int i=0;i<Math.min(url_cnt,5);i++)
+            		System.out.println(googleDomain[i]);
+            	if(wikiDomain.length()>1)
+            		System.out.println(wikiDomain);
+            	if(angelListDomain.length()>1)
+            		System.out.println(angelListDomain);
+            	if(crunchBaseDomain.length()>1)
+            		System.out.println(crunchBaseDomain);
+            }
             
             companyName ="";
-            System.out.println("Enter a Company name :");
+            System.out.println("\n\nEnter a Company name :");
             companyName = in.nextLine();
         }
-        
+        System.out.println("---");
      }
     
+    //Installs trust certificates.
     public static void trustCertificates()
     {
     	 TrustManager[] trustAllCerts = new TrustManager[]{
@@ -123,6 +202,7 @@ public class App
         }
     }
     
+    //Returns hompage url from google search url.
     public String getHomePageURL(String url)
     {
     	int i = 0, pos = 0, tpos = 0;
@@ -137,15 +217,5 @@ public class App
     	
     }
     
-    public String getDomainName(String url)
-    {
-		
-    	String domainName = "";
-    	matcher = patternDomainName.matcher(url);
-    	if (matcher.find()) {
-    		domainName = matcher.group(0).toLowerCase().trim();
-    	}
-    	return domainName;
-    		
-     }
+    
 }    

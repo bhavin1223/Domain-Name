@@ -18,134 +18,123 @@ import org.jsoup.select.Elements;
 
 
 public class GoogleResults {
-
+	
+	//Returns top 10 matches from google search.
 	public String[] googleDomainName( String companyName,int numberOfUrls) throws UnsupportedEncodingException, IOException
 	{
-		//String google = "http://www.google.com/search?q=";
+		
         App obj = new App();
-    	//String charset = "UTF-8";
-    	//String userAgent = "ExampleBot 1.0 (+http://example.com/bot)"; 
-    	Elements links = generateURLs(companyName,numberOfUrls);
-		//String result = "";
-    	//Elements links = Jsoup.connect(google + URLEncoder.encode(companyName, charset)+ "&num=5").userAgent(userAgent).referrer("http://www.google.com").get().select(".g>.r>a");
+        
+    	Elements links = generateURLs(companyName,numberOfUrls);	//Generates google search urls.
+		
+    	LinkedHashMap<String, Integer> urlHashMap = new LinkedHashMap<String, Integer>();
+    	String[] result = new String[20];   	
+    	int linkCount = 1, delta=0;
     	
-    	LinkedHashMap<String, Integer> test = new LinkedHashMap<String, Integer>();
-    	String[] result = new String[5];   	
-    	int cnt = 1;
-    	for (Element link : links) 
+    	companyName = modifyCompanyName(companyName);			//Removes pvt. inc. etc. from the company name.
+	    
+    	for (Element link : links) 								//Iterates through the links.
     	{
     	    String title = link.text();
     	    String url = link.absUrl("href"); // Google returns URLs in format "http://www.google.com/url?q=<url>&sa=U&ei=<someKey>".
     	    url = URLDecoder.decode(url.substring(url.indexOf('=') + 1, url.indexOf('&')), "UTF-8");
 
-    	    if (!url.startsWith("http")) {
-    	        continue; // Ads/news/etc.
+    	    if (!url.startsWith("http")||skipUrlFromUrl(url)||skipUrlFromTitle(title)) {
+    	        continue; // Ads/news/apps/articles etc.
     	    }
-    	    System.out.println("----------");
-    	    System.out.println("   "+cnt+"   ");
-    	    cnt++;
-    	    System.out.println("Title: " + title);
-    	    String homeUrl = obj.getHomePageURL(url);
+    	    
+    	    String homeUrl = obj.getHomePageURL(url);		//Get home page url based on google search result url.
+    	    
     	    if(url.charAt(url.length() - 1)!='/')
     	    	url = url + "/";
-    	    System.out.println("URL: " + url);
     	    
-    	    title = title.replaceAll("\\s+","");
+    	    
+    	    title = title.replaceAll("\\s+","");						//Removes white spaces from the title.
     	    title = title.toLowerCase();
-    	    companyName = companyName.toLowerCase();
-    	    companyName = companyName.replace(",","");
-    	    companyName = companyName.replace("&","");
-    	    companyName = companyName.replace(" Inc","");
-    	    companyName = companyName.replace(".","");
-    	    companyName = companyName.replace("pvt","");
-    	    companyName = companyName.replace("ltd","");
-    	    companyName = companyName.replace("financial","");
-    	    companyName = companyName.replace("corporation","");
-  
-    	    companyName = companyName.replaceAll("\\s+","");
-    	    int count = url.length() - url.replace("/", "").length();
+    	    companyName = companyName.replaceAll("\\s+","");			//Removes white spaces from the company name.
+    	    int count = url.length() - url.replace("/", "").length();	//Conuts number of '/' in the url.
     	    
-    	    
+    	    //If title contains company name and url lenght is less than 50 chars.
     	    if(title.toLowerCase().contains(companyName.toLowerCase())&&(count<5)&&url.length()<50)
     	    {
+    	    	
+    	    	//If url has 3 '/' i.e. it's home page url.
     	    	if(count==3)
     	    	{
-    	    		System.out.println("Distance : "+0);
-    	    	    url = url.replace("http://","");
-    	    	    url = url.replace("https://","");
-    	    	    //url = url.replace("www.","");
-    	    	    url = url.replace("/","");
-
-    	    		test.put(url,0);
+    	    		url = removeHttp(url);		//Removes http:// https:// etc.
+    	    	    
+    	    	    delta = correction(url);	//Gives priority to .net .co etc. over other nation urls (like .it. in. etc) by decreasing distance by 1.
+    	    	    //System.out.println("Distance : "+delta);
+    	    		urlHashMap.put(url,delta+url.length()+linkCount);	//Puts url with distance value in the hash map.
     	    	}
+    	    	//Title contains company name, but url is not home page url.
     	    	else
     	    	{
-    	    		System.out.println("Home URL: " + homeUrl);
+    	    		
             		try
             		{
+            			//Connects to homepage.
             			Document doc = Jsoup.connect( homeUrl)
                 						.userAgent("Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:25.0) Gecko/20100101 Firefox/25.0")
                 						.referrer("http://www.google.com") 
                 						.ignoreHttpErrors(true)
-                						.referrer("http://www.google.com")
                 						.timeout(5000).get();
 
-                		String homeTitle = doc.title();
-                		System.out.println("Home Title : " + homeTitle);
+                		String homeTitle = doc.title();			//Home page title
+            			
+                		homeTitle = homeTitle.replaceAll("\\s+","");		//Removes white space from the homepage title.
+                		
+                		//Home page title contains the company name.
                 		if(homeTitle.toLowerCase().contains(companyName.toLowerCase()))
                 		{
-                			System.out.println("Distance : "+homeUrl.length());
-                			homeUrl = homeUrl.replace("http://","");
-                			homeUrl = homeUrl.replace("https://","");
-            	    	    //homeUrl = homeUrl.replace("www.","");
-                			homeUrl = homeUrl.replace("/","");
-                			test.put(homeUrl,homeUrl.length());
+                			homeUrl = removeHttp(homeUrl);			//Removes http:// https:// etc.
+                			delta = correction(homeUrl);			//Calculates correction.
+								                			//As home page title contains company name, So distance is 0. 
+								                			//But google query returned some inner address of a website.
+								                			//To give direct homepage urls some edge over this url, added url length as distance. 
+                			urlHashMap.put(homeUrl,url.length()+delta+linkCount);		//Puts url with distance value in the hash map.
                 		}
+                		//Home page title doesn't contain the company name.
                 		else
                 		{
-                			homeTitle = homeTitle.replaceAll("\\s+","");
                 			homeTitle = homeTitle.toLowerCase();
-                			int dist = stringDist(companyName,homeTitle);
-                			homeUrl = homeUrl.replace("http://","");
-                			homeUrl = homeUrl.replace("https://","");
-            	    	    //homeUrl = homeUrl.replace("www.","");
-                			homeUrl = homeUrl.replace("/","");
-                			test.put(homeUrl,dist+homeUrl.length());
-                			System.out.println("Distance :" + (dist+homeUrl.length()));
+                											//Calculates distance between company name and homepage title.
+                			int dist = stringDist(companyName,homeTitle);		
+                			homeUrl = removeHttp(homeUrl);						//Removes http:// https:// etc.
+                			delta = correction(homeUrl);						//Calculates corrections.
+                			urlHashMap.put(homeUrl,dist+url.length()+delta+linkCount);	//Puts url with distance value in the hash map.
+                			
                 		}
             		}
             		catch(Exception e)
             		{
-            			
+            			//Connection error or Site is not allowing Bots.
             		}
     	    	}
         	    
         		
     	    }
+    	    //Google search title doesn't contain company name, but it is home page url.
     	    else if(count==3)
     	    {
-    	    	int dist = stringDist(companyName,title);
-    	    	System.out.println("Distance :" + dist);
-    	    	url = url.replace("http://","");
-	    	    url = url.replace("https://","");
-	    	    //url = url.replace("www.","");
-	    	    url = url.replace("/","");
-
-    	    	test.put(url,dist);
-    	    	System.out.println("Same home page name");
+    	    	int dist = stringDist(companyName,title);		//Calculate distance between title and comapny name.
+    	    	
+    	    	url = removeHttp(url);							//Removes http:// https:// etc.
+	    	    delta = correction(url);
+    	    	urlHashMap.put(url,dist+delta+url.length()+linkCount);	//Puts url with distance value in the hash map.				
+    	    	//System.out.println("Same home page name");
     	    	continue;
     	    } 
     	    else
     	    {
-    	    	System.out.println("****Skipping this URL****" );
+    	    	//Skip every other links.
+    	    	//System.out.println("****Skipping this URL****" );
     	    }
-    	    
-    	    
-    	    System.out.println("----------");
+    	    linkCount++;
     	}
     	
-    	List<Map.Entry<String, Integer>> entries = new ArrayList<Map.Entry<String, Integer>>(test.entrySet());
-        
+    	List<Map.Entry<String, Integer>> entries = new ArrayList<Map.Entry<String, Integer>>(urlHashMap.entrySet());
+        //Sorts domain name based on distance.
     	Collections.sort(entries, new Comparator<Map.Entry<String, Integer>>() {
 			public int compare(Map.Entry<String, Integer> a, Map.Entry<String, Integer> b)
 			{
@@ -155,19 +144,19 @@ public class GoogleResults {
     	int j=0;
     	for (Map.Entry<String, Integer> entry : entries) 
     	{
-    		//sortedMap.put(entry.getKey(), entry.getValue());
-    		//System.out.println(entry.getKey()+" | " + entry.getValue());
-    		if(j<5)
+    		if(j<20)
     		{
     			result[j] = entry.getKey();
     			j++;
     		}
     		else
     			break;
+    		//System.out.println(entry.getKey()+" "+entry.getValue());
     	}
     	return result;
 	}
 	
+	//Returns url based on search query.
 	public static Elements generateURLs(String search, int numberOfUrl) throws UnsupportedEncodingException, IOException
 	{
 		String google = "http://www.google.com/search?q=";
@@ -178,7 +167,8 @@ public class GoogleResults {
 		return links;
 	}
 	
-	
+	//Calculates distance between 2 string dynamically.
+	//Variant of 'Edit Distance' problem. Here, we can't remove any character from company name.
     public static int stringDist(String str1, String str2)
     {
         int[][] distance = new int[str1.length() + 1][str2.length() + 1];
@@ -192,12 +182,88 @@ public class GoogleResults {
         {
         	for (int j = 1; j <= str2.length(); j++)
         	{
-        		//Can't miss any character from str1, So no distance[i][j-1] term.
+        		//Can't miss any character from str1(Comapny Name), So no distance[i][j-1] term.
         		distance[i][j] = Math.min(distance[i - 1][j] + 1, distance[i - 1][j - 1] + ((str1.charAt(i - 1) == str2.charAt(j - 1)) ? 0 : 1));
         	}
         }
         return distance[str1.length()][str2.length()];
     }
 	
+	//Skips the url if url contains following keywords.
+	public Boolean skipUrlFromUrl(String URL)
+	{
+		//If link contains this keywords, then there is no need to go to it's home page.
+		if(URL.contains("/wiki/")||URL.contains("/store/apps/")
+				||URL.contains("/app/")||URL.contains("/topic/")
+				||URL.contains("/news/")||URL.contains("/dictionary/")
+				||URL.contains("/books?")||URL.contains("/public/")
+				||URL.contains("/Reviews/")||URL.contains("/company/")
+				||URL.contains("/Companies/")||URL.contains("/Salary/")
+				||URL.contains("/Apps/")||URL.contains("/startups/")
+				||URL.contains("/hashtag/")||URL.contains("/page/")
+				||URL.contains("/2016/")||URL.contains("/2015/")
+				||URL.contains("/2015/")||URL.contains("/2014/")
+				||URL.contains("/user/")||URL.contains("/business/")
+				||URL.contains("/tag/")||URL.contains("/Places/")||URL.contains("/category/")||URL.contains("/quotes/"))
+			return true;
+		else
+			return false;
+	}
+	
+	//Skips the url if title contains following keywords.
+	public Boolean skipUrlFromTitle(String title)
+	{
+		//If title contains this keywords, then there is no need to go to it's home page.
+		//It will be just a page of that company on some social media sites.
+		if(title.contains("| Twitter")||title.contains("- Facebook logo")
+				||title.contains(" Instagram photos and videos")||title.contains("- Wikipedia, the free encyclopedia")
+				||title.contains("- wikiHow")||title.contains("- Quora")
+				||title.contains("- Forbes")||title.contains("| LinkedIn")
+				||title.contains("- YouTube")||title.contains("- Google+")
+				||title.contains("- Forbes")||title.contains("| LinkedIn")
+				||title.contains("| CrunchBase")
+				)
+			return true;
+		else
+			return false;
+	}
+	
+	//Removes http:// https:// etc.
+	public String removeHttp(String URL)
+	{
+		URL = URL.replace("http://","");
+		URL = URL.replace("https://","");
+		URL = URL.replace("/","");
+	    return URL;
+	}
+	
+	//Removes ltd. Inc. etc. from company name.
+	public String modifyCompanyName(String companyName)
+	{
+		companyName = companyName.toLowerCase();
+	    companyName = companyName.replace(",","");
+	    companyName = companyName.replace("&","");
+	    companyName = companyName.replace(" Inc","");
+	    companyName = companyName.replace(".","");
+	    companyName = companyName.replace("pvt","");
+	    companyName = companyName.replace("ltd","");
+	    companyName = companyName.replace("financial","");
+	    companyName = companyName.replace("corporation","");
+	    companyName = companyName.replaceAll("\\s+","");
+	    return companyName;
+	}
+	
+	
+	
+	
+    //Gives priority to international domain names like .net .co .com etc over nation domain name like .in .it. etc.
+    public int correction(String urlString)
+    {
+    	int corr = 0;
+    	String url = urlString.replace("www.", "");
+    	if(url.contains(".co")||url.contains(".net")||url.contains(".org")||url.contains(".io")||url.contains(".edu")||url.contains(".ac"))
+    		corr--;
+    	return corr;
+    }
 	
 }
