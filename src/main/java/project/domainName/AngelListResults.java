@@ -32,12 +32,20 @@ public class AngelListResults {
     	    }
     	    
 			Document doc;
+			// need http protocol
+    		//String userAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"; // Change this to your company's name and bot homepage!
+    		RandomUserAgent userAgentObj = new RandomUserAgent();
+    		//String userAgent = userAgentObj.getRandomUserAgent();
+    		String userAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36";
+    		doc = Jsoup.connect(url).userAgent(userAgent).timeout(5000).referrer("http://www.google.com").get();
+    		while(doc==null)
+    		{
+    			System.out.println("Trying to reconnec AngelList..");
+    			doc = Jsoup.connect(url).userAgent(userAgent).timeout(5000).get();
+    		}
 	    	try {
 	
-	    		// need http protocol
-	    		String userAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"; // Change this to your company's name and bot homepage!
-	    		doc = Jsoup.connect(url).userAgent(userAgent).get();
-	
+	    		
 	    		// get page title
 	    		String title = doc.title();			//Page Title.
 	    		
@@ -62,9 +70,18 @@ public class AngelListResults {
 	{
 		String google = "http://www.google.com/search?q=";
 		String charset = "UTF-8";
-		String userAgent = "ExampleBot 1.0 (+http://example.com/bot)";
-		
+		//String userAgent = "ExampleBot 1.0 (+http://example.com/bot)";
+		RandomUserAgent userAgentObj = new RandomUserAgent();
+		String userAgent = userAgentObj.getRandomUserAgent();
 		Elements links = Jsoup.connect(google + URLEncoder.encode(search, charset)+ "&num="+ numberOfUrls).userAgent(userAgent).referrer("http://www.google.com").get().select(".g>.r>a");
+		int cnt=0;
+		while(links.isEmpty()==true&&cnt<5)
+		{
+			userAgent = userAgentObj.getRandomUserAgent();
+			links = Jsoup.connect(google + URLEncoder.encode(search, charset)+ "&num="+ numberOfUrls).userAgent(userAgent).timeout(5000).referrer("http://www.google.com").get().select(".g>.r>a");
+			cnt++;
+		}
+		//System.out.println("In genUrl fn : "+links);
 		return links;
 	}
 }

@@ -29,14 +29,20 @@ public class CrunchBaseResults {
     	    	continue; // Ads/news/etc.
     	    }
     	    
-    	    //System.out.println("" + url);
+    	    System.out.println("" + url);
 			Document doc;
-			
+			RandomUserAgent userAgentObj = new RandomUserAgent();
+    		//String userAgent = userAgentObj.getRandomUserAgent();
+			//String userAgent = "ExampleBot 1.0 (+http://example.com/bot)";
     		String userAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"; 
-    		doc = Jsoup.connect(url).userAgent(userAgent).timeout(5000).ignoreHttpErrors(true).get();		// need http protocol
-    		
+    		doc = Jsoup.connect(url).ignoreHttpErrors(true).userAgent(userAgent).followRedirects(true).referrer("http://www.google.com").timeout(30000).get();		// need http protocol
+//    		while(doc==null)
+//    		{
+//    			System.out.println("Trying to reconnec CrunchBase..");
+//    			doc = Jsoup.connect(url).userAgent(userAgent).timeout(5000).get();
+//    		}
     		String title = doc.title();				//Page title
-    		//System.out.println("title : " + title);
+    		//System.out.println("doc " + doc +"  title : " + title);
     		
 	    	try 
 	    	{
@@ -51,6 +57,8 @@ public class CrunchBaseResults {
 	    				temp = removeHttp(temp);
 	    				temp = temp.toLowerCase();
 	    				result = temp;
+	    				App obj = new App();
+	    				result = obj.getHomePageURL(temp);	
 	    				break;
 	    			}
 	    			
@@ -68,9 +76,16 @@ public class CrunchBaseResults {
 	{
 		String google = "http://www.google.com/search?q=";
 		String charset = "UTF-8";
-		String userAgent = "ExampleBot 1.0 (+http://example.com/bot)";
-		
+		//String userAgent = "ExampleBot 1.0 (+http://example.com/bot)";
+		RandomUserAgent userAgentObj = new RandomUserAgent();
+		String userAgent = userAgentObj.getRandomUserAgent();
 		Elements links = Jsoup.connect(google + URLEncoder.encode(search, charset)+ "&num="+ numberOfUrls).userAgent(userAgent).referrer("http://www.google.com").get().select(".g>.r>a");
+//		while(links.isEmpty()==true)
+//		{
+//			userAgent = userAgentObj.getRandomUserAgent();
+//			links = Jsoup.connect(google + URLEncoder.encode(search, charset)+ "&num="+ numberOfUrls).userAgent(userAgent).timeout(5000).referrer("http://www.google.com").get().select(".g>.r>a");
+//		}
+		//System.out.println("In genUrl fn : "+links);
 		return links;
 	}
 	

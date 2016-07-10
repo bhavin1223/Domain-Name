@@ -1,6 +1,9 @@
 package project.domainName;
 
-
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -12,7 +15,10 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import au.com.bytecode.opencsv.CSVReader;
+
 import com.google.gson.Gson;
+import com.opencsv.CSVWriter;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -51,19 +57,84 @@ public class App
     	Scanner in = new Scanner(System.in);
         String companyName;
         System.out.println("Enter the Company name :");
-        companyName = in.nextLine();
-        while(companyName!=""&&companyName.length()>1)
+
+        String[] row = null;
+        String csvFilename = "E:\\test-data.csv";
+        String predictedDomain ="";
+        CSVReader csvReader = new CSVReader(new FileReader(csvFilename));
+        List content = csvReader.readAll();
+        String [] CompanyName  		= new String[305];
+        String [] DomainName  		= new String[305];
+        String [] PredictedDomain 	= new String[305];
+        String [] WikiDomain  		= new String[305];
+        String [] AngelListDomain  	= new String[305];
+        String [] CrunchBaseDomain  = new String[305];
+        String [] GoogleSearchRank  = new String[305];
+        String [] GoogleDomain 		= new String[305];
+        String [] Distance  		= new String[305];
+        String [] TotalUrls  		= new String[305];
+        String [] RankInResults		= new String[305];
+        int cnt=0;
+        for (Object object : content) {
+        	row = (String[]) object;
+        	CompanyName[cnt] = row[0];
+        	DomainName[cnt] = row[1];
+        	//PredictedDomain[cnt] = row[2];
+        	System.out.println(row[0]
+        	           + " # " + row[1]
+        	          );
+        	cnt++;
+        }
+        //...
+        csvReader.close();
+    	
+    	String csv = "E:\\output.csv";
+    	CSVWriter writer = new CSVWriter(new FileWriter(csv));
+
+    	List<String[]> data = new ArrayList<String[]>();
+    	data.add(new String[] {"CompanyName","DomainName","PredictedDomain","WikiDomain","AngelListDomain","CrunchBaseDomain","GoogleDomain","GoogleSearchRank","Distance","TotalUrls","RankInResults"});
+
+    	
+    	int start,end;
+    	System.out.println("Enter the starting index :");
+    	start = in.nextInt();
+    	System.out.println("Enter the ending index :");
+    	end = in.nextInt();
+    	trustCertificates();
+    	App appObj = new App();
+        //companyName = in.nextLine();
+        //while(companyName!=""&&companyName.length()>1)
+        for(int index=start;index<=end;index++)
         {
+        	companyName = CompanyName[index];
         	System.out.println("Searching the domain name of \'"+companyName+"\'");
         	String search = companyName;
-            
-            trustCertificates();
+        	RankInResults[index] = "1";
+        	if(appObj.isDomainName(companyName))
+        	{
+        		
+        		PredictedDomain[index] = companyName;
+        		GoogleSearchRank[index] = "1";
+        		Distance[index] = "0";
+        		TotalUrls[index] = "1";
+        		WikiDomain[index] = "";
+        		AngelListDomain[index] ="";
+        		CrunchBaseDomain[index] ="";
+        		GoogleDomain[index] = "";
+        		RankInResults[index] = "1";
+        		data.add(new String[] {CompanyName[index],DomainName[index],PredictedDomain[index],WikiDomain[index],AngelListDomain[index],CrunchBaseDomain[index],GoogleDomain[index],GoogleSearchRank[index],Distance[index],TotalUrls[index],RankInResults[index]});
+        		System.out.println("CompanyName : "+CompanyName[index] + "\nDomainName : "+DomainName[index]+"\nPredictedDomain : "+PredictedDomain[index]);
+                System.out.println("WikiDomain : "+WikiDomain[index] + "\nAngelListDomain : "+AngelListDomain[index]+"\nCrunchBaseDomain : "+CrunchBaseDomain[index]+"\nGoogleDomain : "+GoogleDomain[index]);
+                System.out.println("GoogleSearchRank : "+GoogleSearchRank[index] + "\nDistance : "+Distance[index]+"\nTotalUrls : "+TotalUrls[index]+"\nRankInResults : "+RankInResults[index]);
+        		continue;
+        	}
             
             GoogleResults google = new GoogleResults();
             
             //Gives best 20 matches from top 50 google search results.
-            String[] googleDomain = google.googleDomainName(companyName, 50); 
-            
+            String[] googleDomain = new String[20];
+            googleDomain = google.googleDomainName(companyName, 50); 
+              
             System.out.println("Top results from google:" );
             int url_cnt =0; 
             for(int i=0;i<20;i++)
@@ -93,7 +164,8 @@ public class App
             //Gives domain name from AngelList.
             CrunchBaseResults crunchBase = new CrunchBaseResults();
             String crunchBaseDomain = "";
-            crunchBaseDomain = crunchBase.crunchBaseDomainName(search,4);
+            //crunchBaseDomain = crunchBase.crunchBaseDomainName(search,4);
+            
             System.out.println("From CrunchBase: '" +crunchBaseDomain+"'");
             
             wikiDomain = wikiDomain.toLowerCase();
@@ -105,16 +177,19 @@ public class App
             {
             	if(crunchBaseDomain.equals(wikiDomain)&&wikiDomain.length()>4)
             	{
+            		predictedDomain = crunchBaseDomain;
             		System.out.println(crunchBaseDomain);
             		flag = 1;
             	}
             	else if(crunchBaseDomain.equals(angelListDomain)&&angelListDomain.length()>4)
             	{
+            		predictedDomain = crunchBaseDomain;
             		System.out.println(crunchBaseDomain);
             		flag = 1;
             	}
             	else if(angelListDomain.equals(wikiDomain)&&wikiDomain.length()>4)
             	{
+            		predictedDomain = wikiDomain;
             		System.out.println(wikiDomain);
             		flag = 1;
             	}
@@ -123,18 +198,26 @@ public class App
 	                {
 	                	if((wikiDomain.length()>1)&&(googleDomain[i].equals(wikiDomain)==true))
 	                	{
+	                		predictedDomain = googleDomain[i];
+//	                		RankInResults[index] = ""+ (i+1);
 	                		System.out.println("" + googleDomain[i]);
 	                		flag = 1;
 	                		break;
 	                	}
-	                	else if(angelListDomain.length()>1&&googleDomain[i].equals(angelListDomain)==true)
+	                	else if(angelListDomain.length()>1&&
+	                			(googleDomain[i].equals(angelListDomain)==true))
 	                	{
+	                		predictedDomain = googleDomain[i];
+//	                		RankInResults[index] = ""+ (i+1);
 	                		System.out.println("" + googleDomain[i]);
 	                		flag = 1;
 	                		break;
 	                	}
-	                	else if(crunchBaseDomain.length()>1&&googleDomain[i].equals(crunchBaseDomain)==true)
+	                	else if(crunchBaseDomain.length()>1&&
+	                			(googleDomain[i].equals(crunchBaseDomain)==true))
 	                	{
+	                		predictedDomain = googleDomain[i];
+//	                		RankInResults[index] = ""+ (i+1);
 	                		System.out.println("" + googleDomain[i]);
 	                		flag = 1;
 	                		break;
@@ -146,11 +229,11 @@ public class App
             	//Null values in DomainName variables.
             }
             
-            
+            GoogleDomain[index] = googleDomain[0];
             //If no match found the print all the domain names.
             if(flag==0)
             {
-            	
+            	predictedDomain = googleDomain[0];
             	for(int i=0;i<Math.min(url_cnt,5);i++)
             		System.out.println(googleDomain[i]);
             	if(wikiDomain.length()>1)
@@ -160,11 +243,45 @@ public class App
             	if(crunchBaseDomain.length()>1)
             		System.out.println(crunchBaseDomain);
             }
+            TotalUrls[index] = ""+ url_cnt;
+            PredictedDomain[index] = predictedDomain;
+	        //GoogleRank googleRankObj = new GoogleRank();
+	      	String result = "";
+	      	result =google.getRank(PredictedDomain[index],CompanyName[index], 50);
+	      	if(result.contains("|"))
+	      	{
+	      		GoogleSearchRank[index] = result.substring(0, result.indexOf('|'));
+	      		Distance[index] = result.substring(result.indexOf('|')+1);
+	      	}
+	      	LinkedHashMap<String, Integer> urlHashMap = google.getUrlHashMap();
+	      	List<Map.Entry<String, Integer>> entries = new ArrayList<Map.Entry<String, Integer>>(urlHashMap.entrySet());
+	      	int cnt1=1;
+	      	for (Map.Entry<String, Integer> entry : entries) 
+	    	{
+	      		
+	    		if(entry.getKey().contains(predictedDomain))
+	    		{
+	    			RankInResults[index] = "" +cnt1;break;
+	    		}
+	    		cnt1++;
+	    	}
+            WikiDomain[index] =wikiDomain;
+            AngelListDomain[index] = angelListDomain;
+            CrunchBaseDomain[index] = crunchBaseDomain;
+            PredictionScore predictionScoreObj = new PredictionScore();
+            Double score = predictionScoreObj.calculateScore(PredictedDomain[index], GoogleSearchRank[index], Distance[index], TotalUrls[index], RankInResults[index], WikiDomain[index], AngelListDomain[index], CrunchBaseDomain[index]);
+            data.add(new String[] {CompanyName[index],DomainName[index],PredictedDomain[index],WikiDomain[index],AngelListDomain[index],CrunchBaseDomain[index],GoogleDomain[index],GoogleSearchRank[index],Distance[index],TotalUrls[index],RankInResults[index]});
+            System.out.println("CompanyName : "+CompanyName[index] + "\nDomainName : "+DomainName[index]+"\nPredictedDomain : "+PredictedDomain[index]);
+            System.out.println("WikiDomain : "+WikiDomain[index] + "\nAngelListDomain : "+AngelListDomain[index]+"\nCrunchBaseDomain : "+CrunchBaseDomain[index]+"\nGoogleDomain : "+GoogleDomain[index]);
+            System.out.println("GoogleSearchRank : "+GoogleSearchRank[index] + "\nDistance : "+Distance[index]+"\nTotalUrls : "+TotalUrls[index]+"\nRankInResults : "+RankInResults[index]+"\nPrediction Score : "+score);
             
             companyName ="";
-            System.out.println("\n\nEnter a Company name :");
-            companyName = in.nextLine();
+            System.out.println("\n\nEnter a Company name :"+index);
+            //companyName = in.nextLine();
         }
+        writer.writeAll(data);
+
+    	writer.close();
         System.out.println("---");
      }
     
@@ -217,5 +334,11 @@ public class App
     	
     }
     
+    public Boolean isDomainName(String companyName)
+    {
+    	if(!companyName.contains(" ")&&!companyName.contains(",")&&companyName.contains(".")&&companyName.charAt(companyName.length()-1)!='.')
+    		return true;
+    	return false;
+    }
     
 }    
