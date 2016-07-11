@@ -209,7 +209,7 @@ public class GoogleResults {
 	    	    		 		distance = googleObj.stringDist(companyName, homeTitle);
 	    	    	 }
 	    	    	 result = rank + "|" + distance;
-	    	    	    //System.out.println("G Url : "+url +"   Rank"+result);
+	    	    	 //   System.out.println("G Url : "+url +"   Rank"+result);
 	    	    	break;
 	    	    }
         		

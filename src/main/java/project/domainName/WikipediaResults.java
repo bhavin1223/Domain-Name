@@ -27,10 +27,10 @@ public class WikipediaResults {
     	    url = URLDecoder.decode(url.substring(url.indexOf('=') + 1, url.indexOf('&')), "UTF-8");
 
     	    if (!url.startsWith("http")||!url.contains(".wikipedia.")) {
-    	    	System.out.println("~~" + url);
+    	    	//System.out.println("~~" + url);
     	    	continue; // Ads/news/etc.
     	    }
-    	    System.out.println("!~" + url);
+    	    //System.out.println("!~" + url);
 			Document doc;
 	    	try 
 	    	{
@@ -91,7 +91,7 @@ public class WikipediaResults {
 	{
 		String google = "http://www.google.com/search?q=";
 		String charset = "UTF-8";
-		System.out.println("In genUrl fn : "+search);
+		//System.out.println("In genUrl fn : "+search);
 		//String userAgent = "ExampleBot 1.0 (+http://example.com/bot)";
 		RandomUserAgent userAgentObj = new RandomUserAgent();
 		String userAgent = userAgentObj.getRandomUserAgent();
@@ -103,7 +103,7 @@ public class WikipediaResults {
 			links = Jsoup.connect(google + URLEncoder.encode(search, charset)+ "&num="+ numberOfUrl).userAgent(userAgent).timeout(5000).referrer("http://www.google.com").get().select(".g>.r>a");
 			cnt++;
 		}
-		System.out.println("In genUrl fn : "+links);
+		//System.out.println("In genUrl fn : "+links);
 		return links;
 	}
 }

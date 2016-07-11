@@ -96,17 +96,21 @@ public class App
 
     	
     	int start,end;
-    	System.out.println("Enter the starting index :");
-    	start = in.nextInt();
-    	System.out.println("Enter the ending index :");
-    	end = in.nextInt();
+//    	System.out.println("Enter the starting index :");
+//    	start = in.nextInt();
+//    	System.out.println("Enter the ending index :");
+//    	end = in.nextInt();
+    	System.out.println("Enter the company name :");
     	trustCertificates();
     	App appObj = new App();
-        //companyName = in.nextLine();
-        //while(companyName!=""&&companyName.length()>1)
-        for(int index=start;index<=end;index++)
+    	int index = 0;
+        companyName = in.nextLine();
+        while(companyName!=""&&companyName.length()>1)
+        //for(index=start;index<=end;index++)
         {
-        	companyName = CompanyName[index];
+        	//companyName = CompanyName[index];
+        	CompanyName[index] = companyName;
+        	DomainName[index] ="";
         	System.out.println("Searching the domain name of \'"+companyName+"\'");
         	String search = companyName;
         	RankInResults[index] = "1";
@@ -125,7 +129,7 @@ public class App
         		data.add(new String[] {CompanyName[index],DomainName[index],PredictedDomain[index],WikiDomain[index],AngelListDomain[index],CrunchBaseDomain[index],GoogleDomain[index],GoogleSearchRank[index],Distance[index],TotalUrls[index],RankInResults[index]});
         		System.out.println("CompanyName : "+CompanyName[index] + "\nDomainName : "+DomainName[index]+"\nPredictedDomain : "+PredictedDomain[index]);
                 System.out.println("WikiDomain : "+WikiDomain[index] + "\nAngelListDomain : "+AngelListDomain[index]+"\nCrunchBaseDomain : "+CrunchBaseDomain[index]+"\nGoogleDomain : "+GoogleDomain[index]);
-                System.out.println("GoogleSearchRank : "+GoogleSearchRank[index] + "\nDistance : "+Distance[index]+"\nTotalUrls : "+TotalUrls[index]+"\nRankInResults : "+RankInResults[index]);
+                System.out.println("GoogleSearchRank : "+GoogleSearchRank[index] + "\nDistance : "+Distance[index]+"\nTotalUrls : "+TotalUrls[index]+"\nRankInResults : "+RankInResults[index]+"\nPrediction Score : "+1.00);
         		continue;
         	}
             
@@ -276,8 +280,8 @@ public class App
             System.out.println("GoogleSearchRank : "+GoogleSearchRank[index] + "\nDistance : "+Distance[index]+"\nTotalUrls : "+TotalUrls[index]+"\nRankInResults : "+RankInResults[index]+"\nPrediction Score : "+score);
             
             companyName ="";
-            System.out.println("\n\nEnter a Company name :"+index);
-            //companyName = in.nextLine();
+            System.out.println("\n\nEnter a Company name :");
+            companyName = in.nextLine();
         }
         writer.writeAll(data);
 
